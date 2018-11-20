@@ -1,0 +1,124 @@
+---
+- hosts: all
+  vars:
+    postgresql_datadir: /var/lib/pgsql/9.4-bdr/data
+    postgresql_upstream: 192.168.122.12
+    postgresql_downstream: 192.168.122.13
+    postgresql_bdr_database: bdrdemo
+    postgresql_admin_user: postgres
+    postgresql_shared_guc:
+      - { regexp: "^#?listen_addresses = .*$", guc: "listen_addresses = '*'" }
+      - { regexp: "^#?max_replication_slots = .*$", guc: "max_replication_slots = 3" }
+      - { regexp: "^#?max_wal_senders = .*$", guc: "max_wal_senders = 4" }
+      - { regexp: "^#?wal_level = .*$", guc: "wal_level = 'logical'" }
+      - { regexp: "^#?track_commit_timestamp = .*$", guc: "track_commit_timestamp = on" }
+      - { regexp: "^#?shared_preload_libraries = .*$", guc: "shared_preload_libraries = 'bdr'" }
+      - { regexp: "^#?max_worker_processes = .*$", guc: "max_worker_processes = 10" }
+    postgresql_upstream_guc:
+      - { guc: "bdr.connections = 'demo'" }
+      - { guc: "bdr.demo_dsn = 'host={{ postgresql_downstream }} dbname={{ postgresql_bdr_database }} user={{ postgresql_admin_user }}'" }
+    postgresql_downstream_guc:
+      - { guc: "bdr.connections = 'demo'" }
+      - { guc: "bdr.demo_dsn = 'host={{ postgresql_upstream }} dbname={{ postgresql_bdr_database }} user={{ postgresql_admin_user }}'" }
+      - { guc: "bdr.demo_init_replica = on" }
+      - { guc: "bdr.demo_replica_local_dsn = 'host=127.0.0.1 dbname={{ postgresql_bdr_database }} user={{ postgresql_admin_user }}'" }
+
+  remote_user: root
+
+  tasks:
+  - name: Check OS support
+    debug: msg="The following OS family {{ ansible_os_family }} {{ ansible_architecture }} is not supported" fail=yes
+    when: not ansible_os_family == "RedHat" or not ansible_architecture == "x86_64"
+
+  - name: Check packet manager support
+    debug: msg="The following packet manager {{ ansible_pkg_mgr }} is not supported" fail=yes
+    when: not ansible_pkg_mgr == "yum"
+
+  - name: Install 2ndQuadrant PostgreSQL BDR official repository
+    yum:
+      name=http://packages.2ndquadrant.com/postgresql-bdr94-2ndquadrant/yum-repo-rpms/postgresql-bdr94-2ndquadrant-redhat-1.0-2.noarch.rpm
+      state=present
+
+  - name: Install PostgreSQL BDR packages
+    yum:
+      name={{ item }}
+      state=latest
+    with_items:
+      - python-psycopg2
+      - postgresql-bdr94-bdr
+
+  - name: Stop PostgreSQL if are running
+    sudo: yes
+    sudo_user: postgres
+    command: "/usr/pgsql-9.4/bin/pg_ctl -D {{ postgresql_datadir }} stop"
+    ignore_errors: yes
+
+  - name: Remove old PostgreSQL data directory if exists
+    file:
+      dest={{ postgresql_datadir }}
+      state=absent
+
+  - name: Initialize new PostgreSQL BDR cluster on upstream server
+    sudo: yes
+    sudo_user: postgres
+    command: "/usr/pgsql-9.4/bin/initdb -D {{ postgresql_datadir }} -A trust"
+
+  - name: Configure pg_hba.conf
+    lineinfile:
+      dest: "{{ postgresql_datadir }}/pg_hba.conf"
+      state: present
+      owner: "{{ postgresql_admin_user }}"
+      group: "{{ postgresql_admin_user }}"
+      mode: 0640
+      line: "host    {{ item[0] }}     {{ postgresql_admin_user }}        {{ item[1] }}/32       trust"
+    with_nested:
+      - [ 'all', 'replication' ]
+      - [ "{{ postgresql_upstream }}", "{{ postgresql_downstream }}" ]
+
+  - name: Configure postgresql.conf
+    lineinfile:
+      dest: "{{ postgresql_datadir }}/postgresql.conf"
+      state: present
+      owner: "{{ postgresql_admin_user }}"
+      group: "{{ postgresql_admin_user }}"
+      mode: 0640
+      regexp: "{{ item.regexp }}"
+      line: "{{ item.guc }}"
+    with_items: postgresql_shared_guc
+
+  - name: Start PostgreSQL
+    sudo: yes
+    sudo_user: postgres
+    command: "/usr/pgsql-9.4/bin/pg_ctl -D {{ postgresql_datadir }} start"
+
+  - name: Create demo database
+    postgresql_db:
+      name="{{ postgresql_bdr_database }}"
+      state=present
+
+  - name: Configure upstream server postgresql.conf
+    lineinfile:
+      dest: "{{ postgresql_datadir }}/postgresql.conf"
+      state: present
+      owner: "{{ postgresql_admin_user }}"
+      group: "{{ postgresql_admin_user }}"
+      mode: 0640
+      line: "{{ item.guc }}"
+    with_items: postgresql_upstream_guc
+    when: ansible_default_ipv4.address == postgresql_upstream
+
+  - name: Configure downstream server postgresql.conf
+    lineinfile:
+      dest: "{{ postgresql_datadir }}/postgresql.conf"
+      state: present
+      owner: "{{ postgresql_admin_user }}"
+      group: "{{ postgresql_admin_user }}"
+      mode: 0640
+      line: "{{ item.guc }}"
+    with_items: postgresql_downstream_guc
+    when: ansible_default_ipv4.address == postgresql_downstream
+
+  - name: Final PostgreSQL restart
+    sudo: yes
+    sudo_user: postgres
+command: "/usr/pgsql-9.4/bin/pg_ctl -D {{ postgresql_datadir }} restart"

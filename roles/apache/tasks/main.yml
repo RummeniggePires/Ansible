@@ -1,0 +1,77 @@
+---
+- name: 'Install dependencies'
+  apt:
+    name: ['apt-transport-https', 'lsb-release', 'ca-certificates', 'curl']
+    state: latest
+  become: yes
+
+- name: 'PHP'
+  shell: 'echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list'
+  become: yes
+
+- name: 'curl'
+  shell: 'curl -sSL https://packages.sury.org/php/apt.gpg | apt-key add -'
+  args:
+    warn: False
+  become: yes
+
+- name: 'Updating host using apt'
+  apt:
+    update_cache: yes
+  become: yes
+
+- name: 'Install Apache e PHP7'
+  apt:
+    name: ['apache2', 'libapache2-mod-php7.1', 'php7.1-cli', 'php7.1-pdo', 'php7.1-pgsql', 'php7.1-intl', 'php7.1-curl', 'php7.1-mcrypt', 'php7.1-mbstring', 'php7.1-xml', 'php7.1-gd', 'php7.1-zip']
+    state: latest
+  become: yes
+
+- name: 'Download composer'
+  shell: 'curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer'
+  args:
+    warn: False
+  become: yes
+
+- name: 'Composer'
+  shell: 'composer global require "fxp/composer-asset-plugin"'
+  become: yes
+
+- name: 'Replace security apache'
+  replace:
+    path: '/etc/apache2/conf-enabled/security.conf'
+    regexp: 'ServerSignature On'
+    replace: 'ServerSignature Off'
+  become: yes
+
+- name: 'Replace security apache'
+  replace:
+    path: '/etc/apache2/conf-enabled/security.conf'
+    regexp: 'ServerTokens OS'
+    replace: 'ServerTokens Prod'
+  become: yes
+
+- name: 'Replace 000-default.conf'
+  replace:
+    path: '/etc/apache2/sites-enabled/000-default.conf'
+    regexp: 'DocumentRoot /var/www/html'
+    replace: 'DocumentRoot /var/www/html\n
+    \t<Directory /var/www/html/>\n
+      \t\tOptions Indexes FollowSymLinks\n
+      \t\tAllowOverride All\n
+      \t\tRequire all granted\n
+    \t</Directory>'
+  become: yes
+
+- name: 'Rewrite a2enmod'
+  shell: 'a2enmod rewrite'
+  args:
+    warn: False
+  become: yes
+  notify:
+    - restart apache
+
+- name: 'Run grant'
+  shell: '/root/grant.sh'
+  args:
+    warn: False
+  become: yes

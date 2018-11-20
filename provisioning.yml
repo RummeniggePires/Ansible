@@ -1,0 +1,10 @@
+---
+- hosts: root
+  roles:
+    - user
+    
+- hosts: padrao
+  roles:
+    - initial
+    - apache
+    - database

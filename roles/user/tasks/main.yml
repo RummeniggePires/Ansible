@@ -1,0 +1,6 @@
+---
+- name: 'Permission root'
+  shell: 'usermod -aG sudo wari'
+  become_method: su
+  become_user: root
+  become: yes

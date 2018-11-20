@@ -1,0 +1,68 @@
+---
+- name: 'Replace Deb rdrom'
+  replace:
+    path: '/etc/apt/sources.list'
+    regexp: 'deb cdrom'
+    replace: '#deb cdrom'
+  become: yes
+
+- name: 'Updating host using apt'
+  apt:
+    update_cache: yes
+    upgrade: dist
+  become: yes
+
+- name: Clean unwanted olderstuff
+  apt:
+    autoremove: yes
+    purge: yes
+  become: yes
+
+- name: 'Packages essential'
+  apt:
+    name: ['vim', 'build-essential', 'iotop', 'htop', 'mtr', 'colordiff', 'colortail', 'openntpd', 'ntpdate', 'acl']
+    state: latest
+  become: yes
+
+- name: 'Replace Vim'
+  replace:
+    path: '/etc/vim/vimrc'
+    regexp: '"syntax on'
+    replace: 'syntax on'
+  become: yes
+
+- name: 'Copy alias'
+  copy:
+    src: 'files/alias.txt'
+    dest: '/tmp/alias.txt'
+  become: yes
+
+- name: 'Alias'
+  shell: 'cat /tmp/alias.txt  >> /etc/bash.bashrc'
+  become: yes
+
+- name: 'Config issue'
+  shell:  'echo This service is restricted to authorized users only. All activities on this system are logged.
+  Unauthorized access will be fully investigated and reported to the appropriate law enforcement agencies. > /etc/issue.net'
+  become: yes
+
+- name: 'Replace Banner issue'
+  replace:
+    path: '/etc/ssh/sshd_config'
+    regexp: '#Banner /etc/issue.net'
+    replace: 'Banner /etc/issue.net'
+  become: yes
+  notify:
+    - restart sshd
+
+- name: 'Copy grant'
+  copy:
+    src: 'files/grant.sh'
+    dest: '~/grant.sh'
+  become: yes
+
+- name: 'Permission grant'
+  shell: 'chmod 700 ~/grant.sh'
+  args:
+    warn: False
+  become: yes

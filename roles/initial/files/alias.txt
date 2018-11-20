@@ -1,0 +1,14 @@
+
+# Personal
+alias ls="ls --color -F"
+alias l="ls"
+alias ll="ls -lh"
+alias la="ls -a"
+alias lla="ls -lah"
+alias md="mkdir"
+alias tail="colortail"
+alias diff="colordiff"
+alias ..="cd .."
+alias cd..="cd .."
+alias -- +='pushd .'
+alias -- -='popd'
