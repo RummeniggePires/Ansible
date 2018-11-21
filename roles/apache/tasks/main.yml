@@ -22,7 +22,7 @@
 
 - name: 'Install Apache e PHP7'
   apt:
-    name: ['apache2', 'libapache2-mod-php7.1', 'php7.1-cli', 'php7.1-pdo', 'php7.1-pgsql', 'php7.1-intl', 'php7.1-curl', 'php7.1-mcrypt', 'php7.1-mbstring', 'php7.1-xml', 'php7.1-gd', 'php7.1-zip']
+    name: ['apache2', 'libapache2-mod-php7.1', 'php7.1-cli', 'php7.1-pdo', 'php7.1-pgsql', 'php7.1-intl', 'php7.1-curl', 'php7.1-mcrypt', 'php7.1-mbstring', 'php7.1-xml', 'php7.1-gd', 'php7.1-zip', 'php7.1-bcmath']
     state: latest
   become: yes
 
@@ -39,21 +39,21 @@
 - name: 'Replace security apache'
   replace:
     path: '/etc/apache2/conf-enabled/security.conf'
-    regexp: 'ServerSignature On'
+    regexp: '^[ServerSignature On]'
     replace: 'ServerSignature Off'
   become: yes
 
 - name: 'Replace security apache'
   replace:
     path: '/etc/apache2/conf-enabled/security.conf'
-    regexp: 'ServerTokens OS'
+    regexp: '^[ServerTokens OS]'
     replace: 'ServerTokens Prod'
   become: yes
 
 - name: 'Replace 000-default.conf'
   replace:
     path: '/etc/apache2/sites-enabled/000-default.conf'
-    regexp: 'DocumentRoot /var/www/html'
+    regexp: '^[DocumentRoot /var/www/html]'
     replace: 'DocumentRoot /var/www/html\n
     \t<Directory /var/www/html/>\n
       \t\tOptions Indexes FollowSymLinks\n
