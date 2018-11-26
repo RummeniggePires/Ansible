@@ -5,12 +5,11 @@
     state: latest
   become: yes
 
-- name: 'PHP'
-  shell: 'echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list'
-  become: yes
-
-- name: 'curl'
-  shell: 'curl -sSL https://packages.sury.org/php/apt.gpg | apt-key add -'
+- name: 'Add sources list and add key PHP'
+  shell: '{{ item }}'
+  with_items:
+    - 'echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list'
+    - 'curl -sSL https://packages.sury.org/php/apt.gpg | apt-key add -'
   args:
     warn: False
   become: yes
@@ -39,7 +38,7 @@
 - name: 'Replace security apache'
   replace:
     path: '/etc/apache2/conf-enabled/security.conf'
-    regexp: '^[ServerSignature On]'
+    regexp: '^ServerSignature On'
     replace: 'ServerSignature Off'
   become: yes
 
@@ -53,8 +52,8 @@
 - name: 'Replace 000-default.conf'
   replace:
     path: '/etc/apache2/sites-enabled/000-default.conf'
-    regexp: '^[DocumentRoot /var/www/html]'
-    replace: 'DocumentRoot /var/www/html\n
+    regexp: '^DocumentRoot /var/www/html'
+    replace: ' DocumentRoot /var/www/html\n
     \t<Directory /var/www/html/>\n
       \t\tOptions Indexes FollowSymLinks\n
       \t\tAllowOverride All\n

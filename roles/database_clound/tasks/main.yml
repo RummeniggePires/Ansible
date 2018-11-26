@@ -1,0 +1,113 @@
+---
+- name: 'Install database'
+  apt:
+    name: ['curl', 'ca-certificates']
+    state: latest
+  become: yes
+
+- name: 'Add sources list and add key Postgresql'
+  shell: '{{ item }}'
+  args:
+    warn: False
+  with_items:
+    - 'echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+    - 'curl -sSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -'
+  #when: 'if cat /etc/apt/sources.list.d/pgdg.list | grep deb; then return=True; fi'
+  become: yes
+
+- name: 'Updating host using apt'
+  apt:
+    update_cache: yes
+  become: yes
+
+- name: 'Add sources list and add key Postgresql'
+  shell: '{{ item }}'
+  args:
+    warn: False
+  with_items:
+    - 'echo "deb [arch=amd64] http://packages.2ndquadrant.com/bdr/apt/ $(lsb_release -cs)-2ndquadrant main" > /etc/apt/sources.list.d/2ndquadrant.list'
+    - 'curl -sSL http://packages.2ndquadrant.com/bdr/apt/AA7A6805.asc | apt-key add -'
+  become: yes
+
+- name: 'Updating host using apt'
+  apt:
+    update_cache: yes
+  become: yes
+
+- name: 'Install Postgresql'
+  apt:
+    name: ['postgresql-bdr-9.4-bdr-plugin','python-psycopg2']
+    state: latest
+  become: yes
+
+- name: 'Download postgresql.conf'
+  shell: '{{ item }}'
+  with_items:
+    - 'curl -sSLo pg_hba.conf https://s3.us-east-2.amazonaws.com/automatization-files/pg_hba.conf'
+    - 'curl -sSLo postgresql.conf https://s3.us-east-2.amazonaws.com/automatization-files/postgresql.conf'
+    - 'chmod 640 pg_hba.conf'
+    - 'chmod 644 postgresql.conf'
+    - 'mv pg_hba.conf postgresql.conf /etc/postgresql/9.4/main/'
+    - 'chown postgres:postgres /etc/postgresql/9.4/main/*'
+  args:
+    warn: False
+  notify: restart postgresql
+  become: yes
+
+- name: 'Download script'
+  shell: '{{ item }}'
+  with_items:
+    - 'curl -sSLo sync-mon.sh https://s3.us-east-2.amazonaws.com/automatization-files/sync-mon.sh'
+    - 'curl -sSLo replication-mon.sh https://s3.us-east-2.amazonaws.com/automatization-files/replication-mon.sh'
+    - 'curl -sSLo active_users_apps-mon.sh https://s3.us-east-2.amazonaws.com/automatization-files/active_users_apps-mon.sh'
+    - 'curl -sSLo pg_stat-mon.sh https://s3.us-east-2.amazonaws.com/automatization-files/pg_stat-mon.sh'
+    - 'chmod 700 *.sh'
+  args:
+    warn: False
+  become_method: su
+  become_user: postgres
+
+- name: 'Create users'
+  postgresql_user:
+    name: '{{ item.name }}'
+    password: '{{ item.pass }}'
+    role_attr_flags: '{{ item.priv }}'
+  with_items:
+    - { name: 'wari_rep', pass: '1234', priv: 'SUPERUSER,NOCREATEDB,NOCREATEROLE,LOGIN,REPLICATION'}
+    - { name: 'wari_ro', pass: '1234', priv: 'NOSUPERUSER,NOCREATEDB,NOCREATEROLE,LOGIN'}
+    - { name: 'wari_user', pass: '1234', priv: 'NOSUPERUSER,NOCREATEDB,NOCREATEROLE,LOGIN'}
+    - { name: 'wari_devs', pass: '1234', priv: 'NOSUPERUSER,NOCREATEDB,NOCREATEROLE,LOGIN'}
+  become_user: postgres
+  become: yes
+
+- name: 'Create DB'
+  postgresql_db:
+    name: wari_db
+    owner: wari_user
+    encoding: UTF-8
+    lc_collate: pt_BR.UTF-8
+    lc_ctype: pt_BR.UTF-8
+  become_user: postgres
+  become: yes
+
+- name: 'Create Extension'
+  postgresql_ext:
+    name: '{{ item }}'
+    db: wari_db
+  with_items:
+    - 'btree_gist'
+    - 'bdr'
+    - 'uuid-ossp'
+    - 'unaccent'
+  become_user: postgres
+  become: yes
+  ignore_errors: yes
+
+- name: Generate SQL to add other nodes
+  template: src=bdr_group_create.sql.j2 dest=/tmp/bdr_group_create.5432.sql
+  become: yes
+
+- name: Add other nodes to group
+  shell: ' psql -U postgres -d wari_db -p 5432 -f /tmp/bdr_group_create.5432.sql'
+  become_user: postgres
+  become: yes
