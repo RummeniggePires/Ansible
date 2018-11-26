@@ -2,8 +2,8 @@
 - name: 'Replace Deb rdrom'
   replace:
     path: '/etc/apt/sources.list'
-    regexp: '^[deb cdrom]'
-    replace: '#deb cdrom'
+    regexp: '^deb cdrom'
+    replace: '# deb cdrom'
   become: yes
 
 - name: 'Updating host using apt'
@@ -27,7 +27,7 @@
 - name: 'Replace Vim'
   replace:
     path: '/etc/vim/vimrc'
-    regexp: '^["syntax on]'
+    regexp: '^"syntax on'
     replace: 'syntax on'
   become: yes
 
@@ -49,7 +49,7 @@
 - name: 'Replace Banner issue'
   replace:
     path: '/etc/ssh/sshd_config'
-    regexp: '^[#Banner /etc/issue.net]'
+    regexp: '^#Banner /etc/issue.net'
     replace: 'Banner /etc/issue.net'
   become: yes
   notify:

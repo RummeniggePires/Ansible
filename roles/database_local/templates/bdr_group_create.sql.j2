@@ -1,0 +1,5 @@
+SELECT bdr.bdr_group_join(
+   local_node_name := 'thor',
+   node_external_dsn := 'host=10.10.10.15 port=5432 dbname=wari_db user=wari_rep password=1234',
+   join_using_dsn := 'host=10.10.10.14 port=5432 dbname=wari_db user=wari_rep password=1234'
+);

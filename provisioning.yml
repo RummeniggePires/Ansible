@@ -2,9 +2,14 @@
 - hosts: root
   roles:
     - user
-    
-- hosts: padrao
+
+- hosts: clound
+  roles:
+  - initial
+  - database_clound
+
+- hosts: default
   roles:
     - initial
     - apache
-    - database
+    - database_local
