@@ -1,10 +1,4 @@
 ---
-- name: 'Install database'
-  apt:
-    name: ['curl', 'ca-certificates']
-    state: latest
-  become: yes
-
 - name: 'Add sources list and add key Postgresql'
   shell: '{{ item }}'
   args:
@@ -12,19 +6,6 @@
   with_items:
     - 'echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
     - 'curl -sSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -'
-  #when: 'if cat /etc/apt/sources.list.d/pgdg.list | grep deb; then return=True; fi'
-  become: yes
-
-- name: 'Updating host using apt'
-  apt:
-    update_cache: yes
-  become: yes
-
-- name: 'Add sources list and add key Postgresql'
-  shell: '{{ item }}'
-  args:
-    warn: False
-  with_items:
     - 'echo "deb [arch=amd64] http://packages.2ndquadrant.com/bdr/apt/ $(lsb_release -cs)-2ndquadrant main" > /etc/apt/sources.list.d/2ndquadrant.list'
     - 'curl -sSL http://packages.2ndquadrant.com/bdr/apt/AA7A6805.asc | apt-key add -'
   become: yes
@@ -73,10 +54,10 @@
     password: '{{ item.pass }}'
     role_attr_flags: '{{ item.priv }}'
   with_items:
-    - { name: 'wari_rep', pass: '1234', priv: 'SUPERUSER,NOCREATEDB,NOCREATEROLE,LOGIN,REPLICATION'}
-    - { name: 'wari_ro', pass: '1234', priv: 'NOSUPERUSER,NOCREATEDB,NOCREATEROLE,LOGIN'}
-    - { name: 'wari_user', pass: '1234', priv: 'NOSUPERUSER,NOCREATEDB,NOCREATEROLE,LOGIN'}
-    - { name: 'wari_devs', pass: '1234', priv: 'NOSUPERUSER,NOCREATEDB,NOCREATEROLE,LOGIN'}
+    - { name: 'wari_rep', pass: '{{ wari_rep_pass }}', priv: 'SUPERUSER,NOCREATEDB,NOCREATEROLE,LOGIN,REPLICATION'}
+    - { name: 'wari_ro', pass: '{{ wari_ro_pass }}', priv: 'NOSUPERUSER,NOCREATEDB,NOCREATEROLE,LOGIN'}
+    - { name: 'wari_user', pass: '{{ wari_user_pass }}', priv: 'NOSUPERUSER,NOCREATEDB,NOCREATEROLE,LOGIN'}
+    - { name: 'wari_devs', pass: '{{ wari_devs_pass }}', priv: 'NOSUPERUSER,NOCREATEDB,NOCREATEROLE,LOGIN'}
   become_user: postgres
   become: yes
 
@@ -102,10 +83,10 @@
   ignore_errors: yes
 
 - name: Generate SQL to add other nodes
-  template: src=bdr_group_create.sql.j2 dest=/tmp/bdr_group_create.5432.sql
+  template: src=bdr_group_create.sql.j2 dest=/tmp/bdr_group_create.{{ db_port }}.sql
   become: yes
 
 - name: Add other nodes to group
-  shell: 'psql -U postgres -d wari_db -p 5432 -f /tmp/bdr_group_create.5432.sql'
+  shell: 'psql -U postgres -d wari_db -p {{ db_port }} -f /tmp/bdr_group_create.{{ db_port }}.sql'
   become_user: postgres
   become: yes
