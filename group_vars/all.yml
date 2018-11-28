@@ -5,3 +5,6 @@ wari_devs_pass: 1234
 db_port: 5432
 local_node: 10.10.10.15
 remote_node: 10.10.10.14
+#ansible_become: yes
+#ansible_become_user: root
+ansible_become_pass: 1234

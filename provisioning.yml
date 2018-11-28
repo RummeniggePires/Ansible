@@ -1,12 +1,12 @@
 ---
-- hosts: root
-  roles:
-    - user
+#- hosts: root
+#  roles:
+#    - user
 
-- hosts: clound
-  roles:
-  - initial
-  - database_clound
+#- hosts: clound
+#  roles:
+#  - initial
+#  - database_clound
 
 - hosts: default
   roles:
