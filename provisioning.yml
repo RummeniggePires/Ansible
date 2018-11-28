@@ -3,13 +3,13 @@
   roles:
     - user
 
-#- hosts: clound
-#  roles:
-#  - initial
-#  - database_clound
+- hosts: clound
+  roles:
+  - initial
+  - database_clound
 
 - hosts: default
   roles:
     - initial
     - apache
-#    - database_local
+    - database_local

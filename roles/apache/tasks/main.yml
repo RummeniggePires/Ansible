@@ -45,15 +45,15 @@
 - name: 'Replace security apache'
   replace:
     path: '/etc/apache2/conf-enabled/security.conf'
-    regexp: '^[ServerTokens OS]'
+    regexp: '^ServerTokens OS'
     replace: 'ServerTokens Prod'
   become: yes
 
 - name: 'Replace 000-default.conf'
   replace:
     path: '/etc/apache2/sites-enabled/000-default.conf'
-    regexp: '^DocumentRoot /var/www/html'
-    replace: ' DocumentRoot /var/www/html\n
+    regexp: 'DocumentRoot /var/www/html'
+    replace: 'DocumentRoot /var/www/html\n
     \t<Directory /var/www/html/>\n
       \t\tOptions Indexes FollowSymLinks\n
       \t\tAllowOverride All\n

@@ -1,11 +1,7 @@
-db_user:
- wari_rep_pass: '1234'
- wari_ro_pass: '1234'
- wari_user_pass: '1234'
- wari_devs_pass: '1234'
-
-db_port: '5432'
-
+wari_rep_pass: 1234
+wari_ro_pass: 1234
+wari_user_pass: 1234
+wari_devs_pass: 1234
+db_port: 5432
 local_node: 10.10.10.15
-
 remote_node: 10.10.10.14
