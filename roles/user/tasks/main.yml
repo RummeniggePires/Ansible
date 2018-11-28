@@ -1,9 +1,6 @@
 ---
 - name: 'Permission root'
-  replace:
-    path: '/etc/sudoers'
-    regexp: '^root  ALL=(ALL:ALL) ALL'
-    replace: 'root  ALL=(ALL:ALL) ALL\n \twari  ALL=(ALL:ALL) ALL'
+  shell: 'usermod -aG sudo wari'
   become_method: su
   become_user: root
   become: yes

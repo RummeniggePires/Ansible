@@ -60,10 +60,10 @@
     password: '{{ item.pass }}'
     role_attr_flags: '{{ item.priv }}'
   with_items:
-    - { name: 'wari_rep', pass: '{{ wari_rep_pass }}', priv: 'SUPERUSER,NOCREATEDB,NOCREATEROLE,LOGIN,REPLICATION'}
-    - { name: 'wari_ro', pass: '{{ wari_ro_pass }}', priv: 'NOSUPERUSER,NOCREATEDB,NOCREATEROLE,LOGIN'}
-    - { name: 'wari_user', pass: '{{ wari_user_pass }}', priv: 'NOSUPERUSER,NOCREATEDB,NOCREATEROLE,LOGIN'}
-    - { name: 'wari_devs', pass: '{{ wari_devs_pass }}', priv: 'NOSUPERUSER,NOCREATEDB,NOCREATEROLE,LOGIN'}
+    - { name: 'wari_rep', pass: "{{ wari_rep_pass }}", priv: 'SUPERUSER,NOCREATEDB,NOCREATEROLE,LOGIN,REPLICATION'}
+    - { name: 'wari_ro', pass: "{{ wari_ro_pass }}", priv: 'NOSUPERUSER,NOCREATEDB,NOCREATEROLE,LOGIN'}
+    - { name: 'wari_user', pass: "{{ wari_user_pass }}", priv: 'NOSUPERUSER,NOCREATEDB,NOCREATEROLE,LOGIN'}
+    - { name: 'wari_devs', pass: "{{ wari_devs_pass }}", priv: 'NOSUPERUSER,NOCREATEDB,NOCREATEROLE,LOGIN'}
   become_user: postgres
   become: yes
 
