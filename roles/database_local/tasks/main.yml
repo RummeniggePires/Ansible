@@ -80,7 +80,7 @@
     - 'bdr'
   become_user: postgres
   become: yes
-  ignore_errors: yes
+  #ignore_errors: yes
 
 - name: Generate SQL to add other nodes
   template: src=bdr_group_create.sql.j2 dest=/tmp/bdr_group_create.{{ db_port }}.sql
