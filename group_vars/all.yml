@@ -3,8 +3,11 @@ wari_ro_pass: 1234
 wari_user_pass: 1234
 wari_devs_pass: 1234
 db_port: 5432
+local_wari_user_pass: 1234
+local_wari_devs_pass: 1234
+local_db_port: 5432
 local_node: 10.10.10.15
+local_node_name: ze_das_cove
 remote_node: 10.10.10.14
-#ansible_become: yes
-#ansible_become_user: root
+remote_node_name: aws_das_cove
 ansible_become_pass: 1234

@@ -1,5 +1,5 @@
 ---
-- name: 'Replace Deb rdrom'
+- name: 'Replace Deb cdrom'
   replace:
     path: '/etc/apt/sources.list'
     regexp: '^deb cdrom'
@@ -24,6 +24,12 @@
     state: latest
   become: yes
 
+- name: 'Remove packages'
+  apt:
+    name: ['nettools']
+    state: absent
+  become: yes
+
 - name: 'Replace Vim'
   replace:
     path: '/etc/vim/vimrc'
@@ -38,7 +44,7 @@
   become: yes
 
 - name: 'Alias'
-  shell: 'cat /tmp/alias.txt  >> /etc/bash.bashrc'
+  shell: 'if grep -q ^alias /etc/bash.bashrc; then echo ;else cat /tmp/alias.txt  >> /etc/bash.bashrc; fi'
   become: yes
 
 - name: 'Config issue'

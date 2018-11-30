@@ -26,7 +26,7 @@
   become: yes
 
 - name: 'Download composer'
-  shell: 'curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer'
+  shell: 'if  ls /usr/local/bin/ | grep -q composer; then echo ;else curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer; fi'
   args:
     warn: False
   become: yes
@@ -35,25 +35,21 @@
   shell: 'composer global require "fxp/composer-asset-plugin"'
   become: yes
 
-- name: 'Replace security apache'
+- name: 'Replace security apach e'
   replace:
     path: '/etc/apache2/conf-enabled/security.conf'
-    regexp: '^ServerSignature On'
-    replace: 'ServerSignature Off'
-  become: yes
-
-- name: 'Replace security apache'
-  replace:
-    path: '/etc/apache2/conf-enabled/security.conf'
-    regexp: '^ServerTokens OS'
-    replace: 'ServerTokens Prod'
+    regexp: "{{ item.regex }}"
+    replace: "{{ item.replace }}"
+  with_items:
+    - { regex: '^ServerSignature On', replace: 'ServerSignature Off' }
+    - { regex: '^ServerTokens OS', replace: 'ServerTokens Prod' }
   become: yes
 
 - name: 'Replace 000-default.conf'
   replace:
     path: '/etc/apache2/sites-enabled/000-default.conf'
-    regexp: 'DocumentRoot /var/www/html'
-    replace: 'DocumentRoot /var/www/html\n
+    regexp: '^\tDocumentRoot /var/www/html$'
+    replace: '\tDocumentRoot /var/www/html/\n
     \t<Directory /var/www/html/>\n
       \t\tOptions Indexes FollowSymLinks\n
       \t\tAllowOverride All\n

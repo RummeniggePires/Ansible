@@ -27,7 +27,7 @@
     state: latest
   become: yes
 
-- name: 'Download postgresql.conf'
+- name: 'Download config files'
   shell: '{{ item }}'
   with_items:
     - 'curl -sSLo pg_hba.conf https://s3.us-east-2.amazonaws.com/automatization-files/pg_hba.conf'
@@ -53,6 +53,7 @@
     warn: False
   become_method: su
   become_user: postgres
+  become: yes
 
 - name: 'Create users'
   postgresql_user:
@@ -64,6 +65,7 @@
     - { name: 'wari_ro', pass: "{{ wari_ro_pass }}", priv: 'NOSUPERUSER,NOCREATEDB,NOCREATEROLE,LOGIN'}
     - { name: 'wari_user', pass: "{{ wari_user_pass }}", priv: 'NOSUPERUSER,NOCREATEDB,NOCREATEROLE,LOGIN'}
     - { name: 'wari_devs', pass: "{{ wari_devs_pass }}", priv: 'NOSUPERUSER,NOCREATEDB,NOCREATEROLE,LOGIN'}
+  become_method: su
   become_user: postgres
   become: yes
 
@@ -74,6 +76,7 @@
     encoding: UTF-8
     lc_collate: pt_BR.UTF-8
     lc_ctype: pt_BR.UTF-8
+  become_method: su
   become_user: postgres
   become: yes
 
@@ -86,15 +89,16 @@
     - 'bdr'
     - 'uuid-ossp'
     - 'unaccent'
+  become_method: su
   become_user: postgres
   become: yes
-  ignore_errors: yes
 
 - name: Generate SQL to add other nodes
   template: src=bdr_group_create.sql.j2 dest=/tmp/bdr_group_create.sql
   become: yes
 
 - name: Add other nodes to group
-  shell: ' psql -U postgres -d wari_db -p 5432 -f /tmp/bdr_group_create.sql'
+  shell: 'psql -U postgres -d wari_db -p 5432 -f /tmp/bdr_group_create.sql'
+  become_method: su
   become_user: postgres
   become: yes

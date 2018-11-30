@@ -3,13 +3,12 @@
 #  roles:
 #    - user
 
-#- hosts: clound
+#- hosts: cloud
 #  roles:
-#  - initial
-#  - database_clound
+#    - database_cloud
 
-- hosts: default
+- hosts: onpremise
   roles:
-    - initial
-    - apache
+    #- initial
+  #  - apache
     - database_local
