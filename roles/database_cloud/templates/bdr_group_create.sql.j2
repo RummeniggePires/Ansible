@@ -1,4 +1,4 @@
 SELECT bdr.bdr_group_create(
-   local_node_name :={{ remote_node }},
+   local_node_name := {{ remote_node_name }},
    node_external_dsn := 'host={{ remote_node }} port=5432 dbname=wari_db user=wari_rep password={{ wari_rep_pass }}'
 );

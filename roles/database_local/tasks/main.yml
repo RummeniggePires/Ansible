@@ -45,8 +45,11 @@
     - 'chmod 700 *.sh'
   args:
     warn: False
-  become_method: su
-  become_user: postgres
+  become: yes
+
+- name: 'Move sh'
+  shell: 'if ls ~wari | grep -q *.sh; then echo mv ~wari/*.sh ~postgres | chown *.sh postgres:postgres postgres; fi'
+  become: yes
 
 - name: 'Create users'
   postgresql_user:
@@ -56,8 +59,9 @@
   with_items:
     - { name: 'wari_rep', pass: '{{ wari_rep_pass }}', priv: 'SUPERUSER,NOCREATEDB,NOCREATEROLE,LOGIN,REPLICATION'}
     - { name: 'wari_ro', pass: '{{ wari_ro_pass }}', priv: 'NOSUPERUSER,NOCREATEDB,NOCREATEROLE,LOGIN'}
-    - { name: 'wari_user', pass: '{{ wari_user_pass }}', priv: 'NOSUPERUSER,NOCREATEDB,NOCREATEROLE,LOGIN'}
-    - { name: 'wari_devs', pass: '{{ wari_devs_pass }}', priv: 'NOSUPERUSER,NOCREATEDB,NOCREATEROLE,LOGIN'}
+    - { name: 'wari_user', pass: '{{ local_wari_user_pass }}', priv: 'NOSUPERUSER,NOCREATEDB,NOCREATEROLE,LOGIN'}
+    - { name: 'wari_devs_', pass: '{{ local_wari_devs_pass }}', priv: 'NOSUPERUSER,NOCREATEDB,NOCREATEROLE,LOGIN'}
+  become_method: su
   become_user: postgres
   become: yes
 
@@ -68,6 +72,7 @@
     encoding: UTF-8
     lc_collate: pt_BR.UTF-8
     lc_ctype: pt_BR.UTF-8
+  become_method: su
   become_user: postgres
   become: yes
 
@@ -78,9 +83,9 @@
   with_items:
     - 'btree_gist'
     - 'bdr'
+  become_method: su
   become_user: postgres
   become: yes
-  #ignore_errors: yes
 
 - name: Generate SQL to add other nodes
   template: src=bdr_group_create.sql.j2 dest=/tmp/bdr_group_create.{{ db_port }}.sql
@@ -88,5 +93,6 @@
 
 - name: Add other nodes to group
   shell: 'psql -U postgres -d wari_db -p {{ db_port }} -f /tmp/bdr_group_create.{{ db_port }}.sql'
+  become_method: su
   become_user: postgres
   become: yes
