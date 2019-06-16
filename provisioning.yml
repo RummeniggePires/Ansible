@@ -9,6 +9,6 @@
 
 - hosts: onpremise
   roles:
-    #- initial
-  #  - apache
+    - initial
+    - apache
     - database_local
